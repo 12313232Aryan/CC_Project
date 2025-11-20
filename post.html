@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Post an Item - LOST NEEDS</title>
+  <link rel="icon" href="img/LOSTNEEDS.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <!-- Correct Cognito Library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/amazon-cognito-identity-js/6.2.1/amazon-cognito-identity.min.js"></script>
+
+  <!-- Correct Auth File -->
+  <script src="/js/auth.js"></script>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500&display=swap');
+    *{box-sizing:border-box;margin:0;padding:0;font-family:'Poppins',sans-serif}
+    body{padding-top:75px;background:#f5f8fb}
+    .container{max-width:900px;margin:30px auto;background:#fff;padding:20px;border-radius:8px}
+    label{display:block;margin-top:10px;color:#333}
+    input,select,textarea{width:100%;padding:10px;margin-top:6px;border-radius:6px;border:1px solid #ddd}
+    .row{display:flex;gap:12px}
+    .col{flex:1}
+    .btn{background:#3498db;color:#fff;padding:10px 14px;border-radius:6px;border:none;cursor:pointer;margin-top:12px}
+  </style>
+</head>
+
+<body>
+
+  <script>
+    // Protect the page
+    window.requireAuth();
+  </script>
+
+  <header style="position:fixed;top:0;left:0;width:100%;height:65px;background:#3498db;color:#fff;
+  display:flex;align-items:center;justify-content:space-between;padding:10px 20px;z-index:100">
+    <div style="display:flex;align-items:center">
+      <img src="img/Lostneeds2.png" height="40">
+      <strong style="margin-left:10px">LOST NEEDS</strong>
+    </div>
+    <nav>
+      <a href="lostandfound.html" style="color:#fff;text-decoration:none">Browse</a>
+    </nav>
+  </header>
+
+  <main class="container">
+    <h2>Post a Lost / Found Item</h2>
+
+    <form id="postForm">
+      <div class="row">
+        <div class="col">
+          <label>Date</label>
+          <input type="date" id="date" required>
+        </div>
+        <div class="col">
+          <label>Time</label>
+          <input type="time" id="time" required>
+        </div>
+      </div>
+
+      <label>Category</label>
+      <select id="category" required>
+        <option value="mobile">Mobile Phone</option>
+        <option value="wallet">Wallet</option>
+        <option value="keys">Keys</option>
+        <option value="bags">Bag</option>
+        <option value="documents">Documents</option>
+      </select>
+
+      <label>Title</label>
+      <input id="title" required>
+
+      <label>Description</label>
+      <textarea id="description" rows="3" required></textarea>
+
+      <label>Location</label>
+      <input id="location" required>
+
+      <label>Your name</label>
+      <input id="ownerName">
+
+      <label>Your email</label>
+      <input type="email" id="ownerEmail">
+
+      <label>Post Type</label>
+      <select id="postType">
+        <option value="found">Found</option>
+        <option value="lost">Lost</option>
+      </select>
+
+      <label>Security Question</label>
+      <input id="securityQuestion" required>
+
+      <label>Image (optional)</label>
+      <input type="file" id="imageFile" accept="image/*">
+
+      <button type="button" class="btn" id="submitBtn">Submit</button>
+      <div id="status" style="margin-top:12px"></div>
+    </form>
+  </main>
+
+  <!-- MAIN APP -->
+  <script type="module">
+    import { getUploadUrl, submitReport } from "/js/app.js";
+
+    document.getElementById("submitBtn").addEventListener("click", async () => {
+      const status = document.getElementById("status");
+      status.innerText = "Submitting...";
+
+      try {
+        let imageKey = "";
+        const file = document.getElementById("imageFile").files[0];
+
+        if (file) {
+          const ext = file.name.split(".").pop();
+          const res = await getUploadUrl(ext, file.type);
+
+          await fetch(res.uploadUrl, {
+            method: "PUT",
+            body: file,
+            headers: { "Content-Type": file.type }
+          });
+
+          imageKey = res.key;
+        }
+
+        const payload = {
+          title: title.value,
+          description: description.value,
+          category: category.value,
+          location: location.value,
+          ownerName: ownerName.value,
+          ownerEmail: ownerEmail.value,
+          postType: postType.value,
+          securityQuestion: securityQuestion.value,
+          date: date.value,
+          time: time.value,
+          imageKey
+        };
+
+        await submitReport(payload);
+
+        status.innerText = "Report submitted! Redirecting...";
+        setTimeout(() => window.location.href = "lostandfound.html", 1500);
+
+      } catch (err) {
+        status.innerText = "Error: " + err.message;
+      }
+    });
+  </script>
+
+</body>
+</html>
